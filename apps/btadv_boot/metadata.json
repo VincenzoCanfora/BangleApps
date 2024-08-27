@@ -9,7 +9,7 @@
   "supports": ["BANGLEJS2"],
   "readme": "README.md",
   "storage": [
-    { "name": "btadv_boot.boot.js", "url": "btadv_boot.boot.js" },
+    { "name": "btadv_boot.app.js", "url": "btadv_boot.app.js" },
     {"name":"btadv_boot.img","url":"icon.js","evaluate":true}
   ]
 }
