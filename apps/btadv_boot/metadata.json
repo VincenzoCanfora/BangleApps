@@ -10,6 +10,6 @@
   "readme": "README.md",
   "storage": [
     { "name": "btadv_boot.boot.js", "url": "btadv_boot.boot.js" },
-    { "name": "btadv_boot.img", "url": "btadv_boot.icon.js", "evaluate": true }
+    {"name":"btadv_boot.img","url":"icon.js","evaluate":true}
   ]
 }
