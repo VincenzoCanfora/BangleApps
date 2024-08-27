@@ -1,0 +1,17 @@
+{
+  "id": "btadv_boot",
+  "name": "btadv_boot",
+  "shortName": "BT Boot Adv",
+  "version": "0.01",
+  "description": "Avvia e pubblicizza i dati dei sensori al boot via Bluetooth",
+  "icon": "icon.png",
+  "tags": "health,tool,sensors,bluetooth,boot",
+  "supports": ["BANGLEJS2"],
+  "readme": "README.md",
+  "storage": [
+    { "name": "btadv_boot.boot.js", "url": "btadv_boot.boot.js" },
+    { "name": "btadv_boot.img", "url": "btadv_boot.icon.js", "evaluate": true }
+  ],
+  "allow_rename": true,
+  "boot": true
+}
