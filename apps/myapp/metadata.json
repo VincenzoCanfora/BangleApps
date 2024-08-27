@@ -11,7 +11,5 @@
   "storage": [
     { "name": "btadv_boot.boot.js", "url": "btadv_boot.boot.js" },
     { "name": "btadv_boot.img", "url": "btadv_boot.icon.js", "evaluate": true }
-  ],
-  "allow_rename": true,
-  "boot": true
+  ]
 }
