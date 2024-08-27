@@ -3,6 +3,7 @@
     /*
      * Questa funzione prepara l'advertisement BLE per i sensori.
      */
+    console.log("[BLE]: Impostazione dei servizi BLE...");
     require("ble_advert").set(0x180d, undefined, {
       connectable: true,
       discoverable: true,
@@ -44,13 +45,15 @@
           value: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         }
       }
-    });
+    }, { uart: false });
+    console.log("[BLE]: Servizi BLE impostati correttamente.");
   }
 
   function updateBLEData(hrm, bar, mag, gps) {
     /*
      * Invia i dati aggiornati dei sensori via BLE
      */
+    console.log("[BLE]: Aggiornamento dei dati BLE...");
     const services = {
       0x180D: {
         0x2A37: {
@@ -89,13 +92,13 @@
 
     try {
       NRF.updateServices(services);
+      console.log("[BLE]: Servizi BLE aggiornati con successo.");
     } catch (error) {
+      console.error("[BLE]: Errore durante l'aggiornamento dei dati BLE!", error.message);
       if (error.message.includes("BLE restart")) {
         NRF.disconnect();
       } else if (error.message.includes("UUID")) {
         setupBLEAdvertising();
-      } else {
-        console.log("[BLE]: Unexpected error updating BLE data! Error: " + error.message);
       }
     }
   }
@@ -137,8 +140,16 @@
 
   // Collegamento dei sensori agli eventi
   let bar, mag, gps;
+  console.log("[Sensors]: Abilitazione dei sensori...");
   Bangle.on("HRM", (hrm) => updateBLEData(hrm, bar, mag, gps));
   Bangle.on("pressure", (newBar) => { bar = newBar; updateBLEData(undefined, bar, mag, gps); });
   Bangle.on("mag", (newMag) => { mag = newMag; updateBLEData(undefined, bar, mag, gps); });
   Bangle.on("GPS", (newGps) => { gps = newGps; updateBLEData(undefined, bar, mag, gps); });
+
+  // Attivazione dei sensori
+  Bangle.setHRMPower(true, "btadv");
+  Bangle.setBarometerPower(true, "btadv");
+  Bangle.setCompassPower(true, "btadv");
+  Bangle.setGPSPower(true, "btadv");
+  console.log("[Sensors]: Sensori attivati.");
 })();
