@@ -40,7 +40,7 @@ Graphics.prototype.setFontAnton = function(scale) {
   setTimeout(Bangle.drawWidgets,0);
 
   // Configurazione dei servizi BLE e dei sensori
-  function setupBLEAdvertising() {
+ /* function setupBLEAdvertising() {
     require("ble_advert").set(0x180d, undefined, {
       connectable: true,
       discoverable: true,
@@ -96,7 +96,84 @@ Graphics.prototype.setFontAnton = function(scale) {
         }
       }
     }, { uart: false });
-  }
+  }*/
+
+function setupBLEAdvertising() {
+  require("ble_advert").set(0x180d, undefined, {
+    connectable: true,
+    discoverable: true,
+    scannable: true,
+    whenConnected: true,
+  });
+
+  NRF.setServices({
+    0x180D: { // Heart Rate Service
+      0x2A37: { // Heart Rate Measurement
+        notify: true,
+        readable: true,
+        value: [0x06, 0],
+        onRead: () => [0x06, hrm_1 && hrm_1.confidence >= 50 ? hrm_1.bpm : 0]
+      },
+      0x2A38: { // Sensor Location: Wrist
+        value: 0x02,
+        readable: true
+      }
+    },
+    0x181A: { // Environmental Sensing
+      0x2A6C: { // Elevation
+        notify: true,
+        readable: true,
+        value: [0, 0, 0],
+        onRead: () => bar_1 ? toByteArray(Math.round(bar_1.altitude * 100), 3, true) : [0, 0, 0]
+      },
+      0x2A6D: { // Pressure
+        notify: true,
+        readable: true,
+        value: [0, 0, 0, 0],
+        onRead: () => bar_1 ? toByteArray(Math.round(bar_1.pressure * 10), 4, false) : [0, 0, 0, 0]
+      },
+      0x2A1F: { // Temperature
+        notify: true,
+        readable: true,
+        value: [0, 0],
+        onRead: () => bar_1 ? toByteArray(Math.round(bar_1.temperature * 10), 2, true) : [0, 0]
+      },
+      0x2AA1: { // Magnetic Flux Density
+        notify: true,
+        readable: true,
+        value: [0, 0, 0, 0, 0, 0],
+        onRead: () => mag_1 ? encodeMag(mag_1) : [0, 0, 0, 0, 0, 0]
+      }
+    },
+    0x1819: { // Location and Navigation
+      0x2A67: { // Position Quality
+        notify: true,
+        readable: true,
+        value: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        onRead: () => gps_1 ? encodeGps(gps_1) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      }
+    },
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e': { // Custom Service
+      '6e400002-b5a3-f393-e0a9-e50e24dcca9e': { // TX Characteristic
+        notify: true,
+        readable: true,
+        writable: false,
+        value: [0] // Puoi cambiare il valore iniziale a seconda delle tue esigenze
+      },
+      '6e400003-b5a3-f393-e0a9-e50e24dcca9e': { // RX Characteristic
+        notify: true,
+        readable: true,
+        writable: true,
+        value: [0],
+        onWrite: function(evt) {
+          console.log("Received data:", evt.data);
+          // Elabora i dati ricevuti
+        }
+      }
+    }
+  }, { uart: false });
+}
+
 
   function updateBLEData(hrm, bar, mag, gps) {
     const services = {
