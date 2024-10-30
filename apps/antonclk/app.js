@@ -153,24 +153,21 @@ function setupBLEAdvertising() {
         onRead: () => gps_1 ? encodeGps(gps_1) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       }
     },
-    '6e400001-b5a3-f393-e0a9-e50e24dcca9e': { // Custom Service
-      '6e400002-b5a3-f393-e0a9-e50e24dcca9e': { // TX Characteristic
-        notify: true,
-        readable: true,
-        writable: false,
-        value: [0] // Puoi cambiare il valore iniziale a seconda delle tue esigenze
-      },
-      '6e400003-b5a3-f393-e0a9-e50e24dcca9e': { // RX Characteristic
-        notify: true,
-        readable: true,
-        writable: true,
-        value: [0],
-        onWrite: function(evt) {
-          console.log("Received data:", evt.data);
-          // Elabora i dati ricevuti
-        }
-      }
-    }
+   '6e400001-b5a3-f393-e0a9-e50e24dcca9e': { // Nordic UART Service
+         '6e400002-b5a3-f393-e0a9-e50e24dcca9e': { // RX Characteristic
+           writable: true,
+           writableWithoutResponse: true, // Write No Response
+           onWrite: function(evt) {
+             console.log("RX data received:", evt.data);
+             // Elabora i dati ricevuti qui
+           }
+         },
+         '6e400003-b5a3-f393-e0a9-e50e24dcca9e': { // TX Characteristic
+           notify: true,
+           readable: true,
+           value: [0] // Inizialmente impostato a [0], modificabile in base alle esigenze
+         }
+       }
   }, { uart: false });
 }
 
