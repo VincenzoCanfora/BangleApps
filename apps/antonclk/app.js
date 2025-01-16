@@ -19,6 +19,11 @@ Graphics.prototype.setFontAnton = function(scale) {
                   require("locale").dow(date, 0).toUpperCase();
     g.setFontAlign(0, 0).setFont("6x8", 2).drawString(dateStr, x, y+48);
 
+     // Ottieni e stampa il MAC address
+      var macAddress = NRF.getAddress(); // Ottieni il MAC address
+      g.setFontAlign(0, 0).setFont("6x8", 1).drawString("MAC: " + macAddress, x, y + 80);
+
+
     if (drawTimeout) clearTimeout(drawTimeout);
     drawTimeout = setTimeout(function() {
       drawTimeout = undefined;
