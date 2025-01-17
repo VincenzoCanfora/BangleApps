@@ -7,7 +7,7 @@ Graphics.prototype.setFontAnton = function(scale) {
   let drawTimeout;
 
   // Funzione per disegnare l'orologio
-  let draw = function() {
+  let draw = function () {
     var x = g.getWidth() / 2;
     var y = g.getHeight() / 2;
     g.reset().clearRect(Bangle.appRect);
@@ -15,257 +15,123 @@ Graphics.prototype.setFontAnton = function(scale) {
     var timeStr = require("locale").time(date, 1);
     g.setFontAlign(0, 0).setFont("Anton").drawString(timeStr, x, y);
 
-    var dateStr = require("locale").date(date, 0).toUpperCase()+"\n"+
-                  require("locale").dow(date, 0).toUpperCase();
-    g.setFontAlign(0, 0).setFont("6x8", 2).drawString(dateStr, x, y+48);
+    var dateStr =
+      require("locale").date(date, 0).toUpperCase() +
+      "\n" +
+      require("locale").dow(date, 0).toUpperCase();
+    g.setFontAlign(0, 0).setFont("6x8", 2).drawString(dateStr, x, y + 48);
 
-     // Ottieni e stampa il MAC address
-      var macAddress = NRF.getAddress(); // Ottieni il MAC address
-      g.setFontAlign(0, 0).setFont("6x8", 1).drawString("MAC: " + macAddress, x, y + 80);
-
+    // Ottieni e stampa il MAC address
+    var macAddress = NRF.getAddress(); // Ottieni il MAC address
+    g.setFontAlign(0, 0).setFont("6x8", 1).drawString("MAC: " + macAddress, x, y + 80);
 
     if (drawTimeout) clearTimeout(drawTimeout);
-    drawTimeout = setTimeout(function() {
+    drawTimeout = setTimeout(function () {
       drawTimeout = undefined;
       draw();
     }, 60000 - (Date.now() % 60000));
   };
 
   Bangle.setUI({
-    mode : "clock",
-    remove : function() {
+    mode: "clock",
+    remove: function () {
       if (drawTimeout) clearTimeout(drawTimeout);
       drawTimeout = undefined;
       delete Graphics.prototype.setFontAnton;
-    }
+    },
   });
 
   Bangle.loadWidgets();
   draw();
-  setTimeout(Bangle.drawWidgets,0);
+  setTimeout(Bangle.drawWidgets, 0);
 
-  // Configurazione dei servizi BLE e dei sensori
- /* function setupBLEAdvertising() {
-    require("ble_advert").set(0x180d, undefined, {
-      connectable: true,
-      discoverable: true,
-      scannable: true,
-      whenConnected: true,
-    });
-
-    NRF.setServices({
-      0x180D: { // heart_rate
-        0x2A37: { // heart_rate_measurement
-          notify: true,
-          readable: true,
-          value: [0x06, 0],
-          onRead: () => [0x06, hrm_1 && hrm_1.confidence >= 50 ? hrm_1.bpm : 0]
-        },
-        0x2A38: { // Sensor Location: Wrist
-          value: 0x02,
-          readable: true
-        }
-      },
-      0x181A: { // environmental_sensing
-        0x2A6C: { // elevation
-          notify: true,
-          readable: true,
-          value: [0, 0, 0],
-          onRead: () => bar_1 ? toByteArray(Math.round(bar_1.altitude * 100), 3, true) : [0, 0, 0]
-        },
-        0x2A6D: { // pressure
-          notify: true,
-          readable: true,
-          value: [0, 0, 0, 0],
-          onRead: () => bar_1 ? toByteArray(Math.round(bar_1.pressure * 10), 4, false) : [0, 0, 0, 0]
-        },
-        0x2A1F: { // temperature
-          notify: true,
-          readable: true,
-          value: [0, 0],
-          onRead: () => bar_1 ? toByteArray(Math.round(bar_1.temperature * 10), 2, true) : [0, 0]
-        },
-        0x2AA1: { // magnetic flux density
-          notify: true,
-          readable: true,
-          value: [0, 0, 0, 0, 0, 0],
-          onRead: () => mag_1 ? encodeMag(mag_1) : [0, 0, 0, 0, 0, 0]
-        }
-      },
-      0x1819: { // location_and_navigation
-        0x2A67: { // position quality
-          notify: true,
-          readable: true,
-          value: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          onRead: () => gps_1 ? encodeGps(gps_1) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        }
-      }
-    }, { uart: false });
-  }*/
-
-function setupBLEAdvertising() {
-  require("ble_advert").set(0x180d, undefined, {
-    connectable: true,
-    discoverable: true,
-    scannable: true,
-    whenConnected: true,
-  });
-
-  NRF.setServices({
-    0x180D: { // Heart Rate Service
-      0x2A37: { // Heart Rate Measurement
+  // Definizione dei servizi BLE personalizzati
+  const customServices = {
+    0x180D: {
+      0x2A37: {
         notify: true,
         readable: true,
         value: [0x06, 0],
-        onRead: () => [0x06, hrm_1 && hrm_1.confidence >= 50 ? hrm_1.bpm : 0]
+        onRead: () => [0x06, hrmData && hrmData.confidence >= 50 ? hrmData.bpm : 0],
       },
-      0x2A38: { // Sensor Location: Wrist
+      0x2A38: {
         value: 0x02,
-        readable: true
-      }
+        readable: true,
+      },
     },
-    0x181A: { // Environmental Sensing
-      0x2A6C: { // Elevation
+    0x181A: {
+      0x2A6C: {
         notify: true,
         readable: true,
         value: [0, 0, 0],
-        onRead: () => bar_1 ? toByteArray(Math.round(bar_1.altitude * 100), 3, true) : [0, 0, 0]
+        onRead: () => barData ? toByteArray(Math.round(barData.altitude * 100), 3, true) : [0, 0, 0],
       },
-      0x2A6D: { // Pressure
+      0x2A6D: {
         notify: true,
         readable: true,
         value: [0, 0, 0, 0],
-        onRead: () => bar_1 ? toByteArray(Math.round(bar_1.pressure * 10), 4, false) : [0, 0, 0, 0]
+        onRead: () => barData ? toByteArray(Math.round(barData.pressure * 10), 4, false) : [0, 0, 0, 0],
       },
-      0x2A1F: { // Temperature
-        notify: true,
-        readable: true,
-        value: [0, 0],
-        onRead: () => bar_1 ? toByteArray(Math.round(bar_1.temperature * 10), 2, true) : [0, 0]
-      },
-      0x2AA1: { // Magnetic Flux Density
-        notify: true,
-        readable: true,
-        value: [0, 0, 0, 0, 0, 0],
-        onRead: () => mag_1 ? encodeMag(mag_1) : [0, 0, 0, 0, 0, 0]
-      }
     },
-    0x1819: { // Location and Navigation
-      0x2A67: { // Position Quality
-        notify: true,
-        readable: true,
-        value: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        onRead: () => gps_1 ? encodeGps(gps_1) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-      }
+    0x2A77: { // Accelerometer Data (Custom UUID)
+      notify: true,
+      readable: true,
+      value: [0, 0, 0, 0, 0, 0],
+      onRead: () => accelData ? encodeAccel(accelData) : [0, 0, 0, 0, 0, 0],
     },
-   '6e400001-b5a3-f393-e0a9-e50e24dcca9e': { // Nordic UART Service
-         '6e400002-b5a3-f393-e0a9-e50e24dcca9e': { // RX Characteristic
-           writable: true,
-           writableWithoutResponse: true, // Write No Response
-           onWrite: function(evt) {
-             console.log("RX data received:", evt.data);
-             // Elabora i dati ricevuti qui
-           }
-         },
-         '6e400003-b5a3-f393-e0a9-e50e24dcca9e': { // TX Characteristic
-           notify: true,
-           readable: true,
-           value: [0] // Inizialmente impostato a [0], modificabile in base alle esigenze
-         }
-       }
-  }, { uart: false });
-}
+  };
 
-
-  function updateBLEData(hrm, bar, mag, gps) {
-    const services = {
-      0x180D: {
-        0x2A37: {
-          value: hrm && hrm.confidence >= 50 ? [0x06, hrm.bpm] : [0x06, 0],
-          notify: true
-        }
-      },
-      0x181A: {
-        0x2A6C: {
-          value: bar ? toByteArray(Math.round(bar.altitude * 100), 3, true) : [0, 0, 0],
-          notify: true
-        },
-        0x2A6D: {
-          value: bar ? toByteArray(Math.round(bar.pressure * 10), 4, false) : [0, 0, 0, 0],
-          notify: true
-        },
-        0x2A1F: {
-          value: bar ? toByteArray(Math.round(bar.temperature * 10), 2, true) : [0, 0],
-          notify: true
-        },
-        0x2AA1: {
-          value: mag ? encodeMag(mag) : [0, 0, 0, 0, 0, 0],
-          notify: true
-        }
-      },
-      0x1819: {
-        0x2A67: {
-          value: gps ? encodeGps(gps) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          notify: true
-        }
-      }
-    };
-
+  // Funzione per aggiornare i servizi BLE
+  function updateCustomServices() {
     try {
-      NRF.updateServices(services);
+      NRF.updateServices(customServices);
     } catch (error) {
+      console.error("Errore nell'aggiornamento dei servizi BLE:", error);
       if (error.message.includes("BLE restart")) {
         NRF.disconnect();
-      } else if (error.message.includes("UUID")) {
-        setupBLEAdvertising();
+      } else {
+        NRF.setServices(customServices, { uart: false });
       }
     }
   }
 
+  // Funzione per codificare i dati dell'accelerometro
+  function encodeAccel(data) {
+    const x = toByteArray(Math.round(data.x * 1000), 2, true);
+    const y = toByteArray(Math.round(data.y * 1000), 2, true);
+    const z = toByteArray(Math.round(data.z * 1000), 2, true);
+    return [x[0], x[1], y[0], y[1], z[0], z[1]];
+  }
+
+  // Helper per convertire i valori in array di byte
   function toByteArray(value, numberOfBytes, isSigned) {
     let byteArray = new Array(numberOfBytes);
-    if (isSigned && (value < 0)) value += 1 << (numberOfBytes * 8);
+    if (isSigned && value < 0) value += 1 << (numberOfBytes * 8);
     for (let index = 0; index < numberOfBytes; index++) {
       byteArray[index] = (value >> (index * 8)) & 0xff;
     }
     return byteArray;
   }
 
-  function encodeGps(data) {
-    const speed = toByteArray(Math.round(1000 * data.speed / 36), 2, false);
-    const lat = toByteArray(Math.round(data.lat * 10000000), 4, true);
-    const lon = toByteArray(Math.round(data.lon * 10000000), 4, true);
-    const elevation = toByteArray(Math.round(data.alt * 100), 3, true);
-    const heading = toByteArray(Math.round(data.course * 100), 2, false);
-    return [
-      157, 2,
-      speed[0], speed[1],
-      lat[0], lat[1], lat[2], lat[3],
-      lon[0], lon[1], lon[2], lon[3],
-      elevation[0], elevation[1], elevation[2],
-      heading[0], heading[1]
-    ];
-  }
+  // Avvio dei sensori
+  let hrmData, barData, accelData;
+  Bangle.on("HRM", (hrm) => {
+    hrmData = hrm;
+    updateCustomServices();
+  });
+  Bangle.on("pressure", (bar) => {
+    barData = bar;
+    updateCustomServices();
+  });
+  Bangle.on("accel", (accel) => {
+    accelData = accel;
+    updateCustomServices();
+  });
 
-  function encodeMag(data) {
-    const x = toByteArray(data.x, 2, true);
-    const y = toByteArray(data.y, 2, true);
-    const z = toByteArray(data.z, 2, true);
-    return [x[0], x[1], y[0], y[1], z[0], z[1]];
-  }
+  Bangle.setHRMPower(true, "custom");
+  Bangle.setBarometerPower(true, "custom");
+  Bangle.setAccelerometerPower(true, "custom");
 
-  // Avvio dei servizi BLE e dei sensori
-  setupBLEAdvertising();
-
-  let hrm_1, bar_1, mag_1, gps_1;
-  Bangle.on("HRM", (hrm) => { hrm_1 = hrm; updateBLEData(hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("pressure", (newBar) => { bar_1 = newBar; updateBLEData(hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("mag", (newMag) => { mag_1 = newMag; updateBLEData(hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("GPS", (newGps) => { gps_1 = newGps; updateBLEData(hrm_1, bar_1, mag_1, gps_1); });
-
-  // Attivazione dei sensori
-  Bangle.setHRMPower(true, "btadv");
-  Bangle.setBarometerPower(true, "btadv");
-  Bangle.setCompassPower(true, "btadv");
-  Bangle.setGPSPower(true, "btadv");
+  // Inizializzazione dei servizi BLE
+  updateCustomServices();
 }
