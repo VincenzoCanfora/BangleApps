@@ -89,13 +89,7 @@ function setupBLEAdvertising() {
         readable: true,
         value: [0, 0, 0, 0, 0, 0],
         onRead: () => mag_1 ? encodeMag(mag_1) : [0, 0, 0, 0, 0, 0]
-      },
-        0x2AA2: { // Magnetic Flux Density
-              notify: true,
-              readable: true,
-              value: [0, 0, 0, 0, 0, 0],
-              onRead: () => acc_1 ? encodeAcc_1(acc_1) : [0, 0, 0, 0, 0, 0]
-            }
+      }
     },
     0x1819: { // Location and Navigation
       0x2A67: { // Position Quality
@@ -105,6 +99,17 @@ function setupBLEAdvertising() {
         onRead: () => gps_1 ? encodeGps(gps_1) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       }
     },
+
+     'E95D0753251D470AA062FA1922DFA9A8': {
+'E95D0753251D470AA062FA1922DFA9A8': {
+        readable: true,
+        notify: true,
+         value: [0, 0, 0, 0, 0, 0],
+        onRead: () => acc_1 ? encodeAcc_1(acc_1) : [0, 0, 0, 0, 0, 0]
+     },
+     },
+
+
    '6e400001-b5a3-f393-e0a9-e50e24dcca9e': { // Nordic UART Service
          '6e400002-b5a3-f393-e0a9-e50e24dcca9e': { // RX Characteristic
            writable: true,
@@ -124,7 +129,7 @@ function setupBLEAdvertising() {
 }
 
 
-  function updateBLEData(hrm, bar, mag, gps) {
+  function updateBLEData(acc,hrm, bar, mag, gps) {
     const services = {
       0x180D: {
         0x2A37: {
@@ -149,17 +154,19 @@ function setupBLEAdvertising() {
           value: mag ? encodeMag(mag) : [0, 0, 0, 0, 0, 0],
           notify: true
         }
-        0x2AA2: {
-                  value: acc_1 ? encodeAcc_1(acc_1) : [0, 0, 0, 0, 0, 0],
-                  notify: true
-                }
       },
       0x1819: {
         0x2A67: {
           value: gps ? encodeGps(gps) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
           notify: true
         }
-      }
+      },
+      'E95D0753251D470AA062FA1922DFA9A8': {
+      'E95D0753251D470AA062FA1922DFA9A8': {
+              notify: true,
+               value: acc ? encodeAcc_1(acc) : [0, 0, 0, 0, 0, 0],
+           },
+           },
     };
 
     try {
@@ -197,12 +204,7 @@ function setupBLEAdvertising() {
       heading[0], heading[1]
     ];
   }
- var encodeAcc_1 = function (data) {
-        var x = toByteArray_1(data.x * 1000, 2, true);
-        var y = toByteArray_1(data.y * 1000, 2, true);
-        var z = toByteArray_1(data.z * 1000, 2, true);
-        return [x[0], x[1], y[0], y[1], z[0], z[1]];
-    };
+
   function encodeMag(data) {
     const x = toByteArray(data.x, 2, true);
     const y = toByteArray(data.y, 2, true);
@@ -210,18 +212,35 @@ function setupBLEAdvertising() {
     return [x[0], x[1], y[0], y[1], z[0], z[1]];
   }
 
-  var onAccel_1 = function (newAcc) { return acc_1 = newAcc; };
+ var toByteArray_1 = function (value, numberOfBytes, isSigned) {
+        var byteArray = new Array(numberOfBytes);
+        if (isSigned && (value < 0)) {
+            value += 1 << (numberOfBytes * 8);
+        }
+        for (var index = 0; index < numberOfBytes; index++) {
+            byteArray[index] = (value >> (index * 8)) & 0xff;
+        }
+        return byteArray;
+    };
+
+  var encodeAcc_1 = function (data) {
+          var x = toByteArray_1(data.x * 1000, 2, true);
+          var y = toByteArray_1(data.y * 1000, 2, true);
+          var z = toByteArray_1(data.z * 1000, 2, true);
+          return [x[0], x[1], y[0], y[1], z[0], z[1]];
+     };
+    var onAccel_1 = function (newAcc) { return acc_1 = newAcc; };
+
+
   // Avvio dei servizi BLE e dei sensori
   setupBLEAdvertising();
 
-  let hrm_1, bar_1, mag_1, gps_1,acc_1;
-  Bangle.on("HRM", (hrm) => { hrm_1 = hrm; updateBLEData(hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("pressure", (newBar) => { bar_1 = newBar; updateBLEData(hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("mag", (newMag) => { mag_1 = newMag; updateBLEData(hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("GPS", (newGps) => { gps_1 = newGps; updateBLEData(hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("accel", onAccel_1);
-
-
+  let acc_1, hrm_1, bar_1, mag_1, gps_1;
+  Bangle.on("HRM", (hrm) => { hrm_1 = hrm; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("pressure", (newBar) => { bar_1 = newBar; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("mag", (newMag) => { mag_1 = newMag; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("GPS", (newGps) => { gps_1 = newGps; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("accel", (newAcc) => { acc_1 = newAcc; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
 
   // Attivazione dei sensori
   Bangle.setHRMPower(true, "btadv");
