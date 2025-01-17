@@ -16,3 +16,4 @@
       Modified to avoid leaving functions defined when using setUI({remove:...})
 0.12: mac add
 0.13: mac ok
+0.14: mac ok2
