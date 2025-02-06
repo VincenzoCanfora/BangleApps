@@ -58,9 +58,16 @@ Graphics.prototype.setFontAnton = function(scale) {
     }
 
     function drawQRCode() {
-        g.clear();
-        require("qrcode").show(NRF.getAddress());
-      }
+      g.clear();
+
+      let qrData = NRF.getAddress();
+      let qr = require("qrcode").create(qrData, { typeNumber: 4, errorCorrectionLevel: 'M' });
+
+      let size = 120; // Dimensione del QR Code
+      let qrImage = qr.renderToImage(size, size);
+
+      g.drawImage(qrImage, (g.getWidth() - size) / 2, (g.getHeight() - size) / 2);
+    }
 
     let showingQR = false;
     Bangle.on("touch", function() {
@@ -72,11 +79,13 @@ Graphics.prototype.setFontAnton = function(scale) {
       }
     });
 
+
+
   Bangle.loadWidgets();
   drawClock();
   setTimeout(Bangle.drawWidgets,0);
 
-/*function setupBLEAdvertising() {
+function setupBLEAdvertising() {
   require("ble_advert").set(0x180d, undefined, {
     connectable: true,
     discoverable: true,
@@ -84,7 +93,7 @@ Graphics.prototype.setFontAnton = function(scale) {
     whenConnected: true,
   });
 
-  NRF.setServices({
+  /*NRF.setServices({
     0x180D: { // Heart Rate Service
       0x2A37: { // Heart Rate Measurement
         notify: true,
@@ -160,8 +169,8 @@ Graphics.prototype.setFontAnton = function(scale) {
            value: [0] // Inizialmente impostato a [0], modificabile in base alle esigenze
          }
        }
-  }, { uart: false });
-}*/
+  }, { uart: false });*/
+}
 
 
 let ppgBuffer = [];
@@ -170,8 +179,6 @@ let ppgBuffer = [];
   function mean(arr) {
     return arr.reduce((a, b) => a + b, 0) / arr.length;
   }
-
-
 
 function calculateSpO2() {
     if (ppgBuffer.length < BUFFER_SIZE) return null;
@@ -233,7 +240,7 @@ function calculateSpO2() {
       if (error.message.includes("BLE restart")) {
         NRF.disconnect();
       } else if (error.message.includes("UUID")) {
-        //setupBLEAdvertising();
+        setupBLEAdvertising();
       }
     }
   }
@@ -291,7 +298,7 @@ function calculateSpO2() {
 
 
   // Avvio dei servizi BLE e dei sensori
-  //setupBLEAdvertising();
+  setupBLEAdvertising();
 
   let acc_1, hrm_1, bar_1, mag_1, gps_1, spo2;
   //Bangle.on("HRM", (hrm) => { hrm_1 = hrm; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
