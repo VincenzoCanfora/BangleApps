@@ -103,9 +103,6 @@ function setupBLEAdvertising() {
         readable: true
       }
     },
-     0x1822: { // Custom service for SpO2
-                  0x2A5F: { value: [Math.round(spo2 || 0)], notify: true,readable: true,   onRead: () => [Math.round(spo2 || 0)]]}
-                },
     0x181A: { // Environmental Sensing
       0x2A6C: { // Elevation
         notify: true,
@@ -130,7 +127,8 @@ function setupBLEAdvertising() {
         readable: true,
         value: [0, 0, 0, 0, 0, 0],
         onRead: () => mag_1 ? encodeMag(mag_1) : [0, 0, 0, 0, 0, 0]
-      }
+      },
+       0x2A5F: { value: [Math.round(spo2 || 0)], notify: true,readable: true,   onRead: () => [Math.round(spo2 || 0)]]}
     },
     0x1819: { // Location and Navigation
       0x2A67: { // Position Quality
@@ -195,9 +193,6 @@ function calculateSpO2() {
           notify: true
         }
       },
-      0x1822: { // Custom service for SpO2
-              0x2A5F: { value: [Math.round(spo2 || 0)], notify: true }
-            },
       0x181A: {
         0x2A6C: {
           value: bar ? toByteArray(Math.round(bar.altitude * 100), 3, true) : [0, 0, 0],
@@ -214,7 +209,8 @@ function calculateSpO2() {
         0x2AA1: {
           value: mag ? encodeMag(mag) : [0, 0, 0, 0, 0, 0],
           notify: true
-        }
+        },
+         0x2A5F: { value: [Math.round(spo2 || 0)], notify: true }
       },
       0x1819: {
         0x2A67: {
