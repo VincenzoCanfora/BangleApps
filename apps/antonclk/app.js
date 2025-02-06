@@ -54,7 +54,7 @@ Graphics.prototype.setFontAnton = function(scale) {
       g.setFontAlign(0, 0).setFont("6x8", 2).drawString(dateStr, x, y+48);
 
       var macAddress = NRF.getAddress();
-      g.setFontAlign(0, 0).setFont("6x8", 2).drawString("MAC: " + macAddress, x, y + 80);
+      g.setFontAlign(0, 0).setFont("6x8", 1.5).drawString("MAC: " + macAddress, x, y + 80);
     }
 
     function drawQRCode() {
