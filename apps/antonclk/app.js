@@ -40,11 +40,45 @@ Graphics.prototype.setFontAnton = function(scale) {
     }
   });
 
+  function drawClock() {
+      var x = g.getWidth() / 2;
+      var y = g.getHeight() / 2;
+      g.reset().clearRect(Bangle.appRect);
+      var date = new Date();
+      date.setHours(date.getHours() + 1); // Aggiustamento per il fuso orario Italia (UTC+1)
+      var timeStr = require("locale").time(date, 1);
+      g.setFontAlign(0, 0).setFont("Anton").drawString(timeStr, x, y);
+
+      var dateStr = require("locale").date(date, 0).toUpperCase()+"\n"+
+                    require("locale").dow(date, 0).toUpperCase();
+      g.setFontAlign(0, 0).setFont("6x8", 2).drawString(dateStr, x, y+48);
+
+      var macAddress = NRF.getAddress();
+      g.setFontAlign(0, 0).setFont("6x8", 2).drawString("MAC: " + macAddress, x, y + 80);
+    }
+
+    function drawQRCode() {
+      g.clear();
+      require("qrcode").draw(NRF.getAddress(), g.getWidth() / 2 - 50, g.getHeight() / 2 - 50, 100);
+    }
+
+    let showingQR = false;
+    Bangle.on("touch", function() {
+      showingQR = !showingQR;
+      if (showingQR) {
+        drawQRCode();
+      } else {
+        drawClock();
+      }
+    });
+
+
+
   Bangle.loadWidgets();
-  draw();
+  drawClock();
   setTimeout(Bangle.drawWidgets,0);
 
-function setupBLEAdvertising() {
+/*function setupBLEAdvertising() {
   require("ble_advert").set(0x180d, undefined, {
     connectable: true,
     discoverable: true,
@@ -65,6 +99,9 @@ function setupBLEAdvertising() {
         readable: true
       }
     },
+     0x1822: { // Custom service for SpO2
+                  0x2A5F: { value: [Math.round(spo2 || 0)], notify: true,readable: true,   onRead: () => [Math.round(spo2 || 0)]]}
+                },
     0x181A: { // Environmental Sensing
       0x2A6C: { // Elevation
         notify: true,
@@ -126,10 +163,28 @@ function setupBLEAdvertising() {
          }
        }
   }, { uart: false });
-}
+}*/
 
 
-  function updateBLEData(acc,hrm, bar, mag, gps) {
+let ppgBuffer = [];
+  const BUFFER_SIZE = 50;
+
+  function mean(arr) {
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+  }
+
+function calculateSpO2() {
+    if (ppgBuffer.length < BUFFER_SIZE) return null;
+    let dc = mean(ppgBuffer);
+    let ac = Math.max(...ppgBuffer) - Math.min(...ppgBuffer);
+    if (dc === 0) return null;
+    let ratio = ac / dc;
+    let spo2 = 110 - 25 * ratio;
+    return Math.max(80, Math.min(100, spo2));
+  }
+
+
+  function updateBLEData(acc,hrm, bar, mag, gps, spo2) {
     const services = {
       0x180D: {
         0x2A37: {
@@ -137,6 +192,9 @@ function setupBLEAdvertising() {
           notify: true
         }
       },
+      0x1822: { // Custom service for SpO2
+              0x2A5F: { value: [Math.round(spo2 || 0)], notify: true }
+            },
       0x181A: {
         0x2A6C: {
           value: bar ? toByteArray(Math.round(bar.altitude * 100), 3, true) : [0, 0, 0],
@@ -175,7 +233,7 @@ function setupBLEAdvertising() {
       if (error.message.includes("BLE restart")) {
         NRF.disconnect();
       } else if (error.message.includes("UUID")) {
-        setupBLEAdvertising();
+        //setupBLEAdvertising();
       }
     }
   }
@@ -229,18 +287,27 @@ function setupBLEAdvertising() {
           var z = toByteArray_1(data.z * 1000, 2, true);
           return [x[0], x[1], y[0], y[1], z[0], z[1]];
      };
-    var onAccel_1 = function (newAcc) { return acc_1 = newAcc; };
+  var onAccel_1 = function (newAcc) { return acc_1 = newAcc; };
 
 
   // Avvio dei servizi BLE e dei sensori
-  setupBLEAdvertising();
+  //setupBLEAdvertising();
 
-  let acc_1, hrm_1, bar_1, mag_1, gps_1;
-  Bangle.on("HRM", (hrm) => { hrm_1 = hrm; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("pressure", (newBar) => { bar_1 = newBar; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("mag", (newMag) => { mag_1 = newMag; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("GPS", (newGps) => { gps_1 = newGps; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("accel", (newAcc) => { acc_1 = newAcc; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  let acc_1, hrm_1, bar_1, mag_1, gps_1, spo2;
+  //Bangle.on("HRM", (hrm) => { hrm_1 = hrm; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("HRM", (hrm) => { hrm_1 = hrm; spo2 = calculateSpO2(); updateBLEData(acc_1, hrm_1, bar_1, mag_1, gps_1, spo2);  });
+  Bangle.on("pressure", (newBar) => { bar_1 = newBar; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1, spo2);  });
+  Bangle.on("mag", (newMag) => { mag_1 = newMag; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1, spo2);  });
+  Bangle.on("GPS", (newGps) => { gps_1 = newGps; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1, spo2);  });
+  Bangle.on("accel", (newAcc) => { acc_1 = newAcc; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1, spo2);  });
+  Bangle.on('HRM-raw', function(data) {
+      if (ppgBuffer.length >= BUFFER_SIZE) ppgBuffer.shift();
+      ppgBuffer.push(data.raw);
+      let spo2 = calculateSpO2();
+      if (spo2 !== null) {
+        console.log("SpO2: ", spo2.toFixed(1) + "%");
+      }
+    });
 
   // Attivazione dei sensori
   Bangle.setHRMPower(true, "btadv");
