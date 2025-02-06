@@ -168,7 +168,7 @@ function setupBLEAdvertising() {
            value: [0] // Inizialmente impostato a [0], modificabile in base alle esigenze
          }
        }*/
-  }, { uart: true });
+  }, { uart: false });
 }
 
 
