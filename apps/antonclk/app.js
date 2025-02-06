@@ -128,7 +128,12 @@ function setupBLEAdvertising() {
         value: [0, 0, 0, 0, 0, 0],
         onRead: () => mag_1 ? encodeMag(mag_1) : [0, 0, 0, 0, 0, 0]
       },
-       0x2A5F: { value: [Math.round(spo2 || 0)], notify: true,readable: true,   onRead: () => [Math.round(spo2 || 0)]]}
+       0x2A5F: {
+       value: [Math.round(spo2 || 0)],
+        notify: true,
+        readable: true,
+          onRead: () => [Math.round(spo2 || 0)]
+          },
     },
     0x1819: { // Location and Navigation
       0x2A67: { // Position Quality
@@ -210,7 +215,7 @@ function calculateSpO2() {
           value: mag ? encodeMag(mag) : [0, 0, 0, 0, 0, 0],
           notify: true
         },
-         0x2A5F: { value: [Math.round(spo2 || 0)], notify: true }
+         0x2A5F: { value: [Math.round(spo2 || 0)], notify: true },
       },
       0x1819: {
         0x2A67: {
