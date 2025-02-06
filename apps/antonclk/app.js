@@ -58,9 +58,9 @@ Graphics.prototype.setFontAnton = function(scale) {
     }
 
     function drawQRCode() {
-      g.clear();
-      require("qrcode").draw(NRF.getAddress(), g.getWidth() / 2 - 50, g.getHeight() / 2 - 50, 100);
-    }
+        g.clear();
+        require("qrcode").show(NRF.getAddress());
+      }
 
     let showingQR = false;
     Bangle.on("touch", function() {
