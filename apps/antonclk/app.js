@@ -72,8 +72,6 @@ Graphics.prototype.setFontAnton = function(scale) {
       }
     });
 
-
-
   Bangle.loadWidgets();
   drawClock();
   setTimeout(Bangle.drawWidgets,0);
