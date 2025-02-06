@@ -173,6 +173,8 @@ let ppgBuffer = [];
     return arr.reduce((a, b) => a + b, 0) / arr.length;
   }
 
+
+
 function calculateSpO2() {
     if (ppgBuffer.length < BUFFER_SIZE) return null;
     let dc = mean(ppgBuffer);
