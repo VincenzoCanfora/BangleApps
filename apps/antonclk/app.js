@@ -247,4 +247,29 @@ function setupBLEAdvertising() {
   Bangle.setBarometerPower(true, "btadv");
   Bangle.setCompassPower(true, "btadv");
   Bangle.setGPSPower(true, "btadv");
+
+
+
+// Esempio: ogni 30 minuti
+setInterval(() => {
+  console.log("Riavvio sensori...");
+
+  // Spegni tutti i sensori
+  Bangle.setHRMPower(false, "btadv");
+  Bangle.setBarometerPower(false, "btadv");
+  Bangle.setCompassPower(false, "btadv");
+  Bangle.setGPSPower(false, "btadv");
+
+  // Dopo un piccolo delay, li riaccendi
+  setTimeout(() => {
+    Bangle.setHRMPower(true, "btadv");
+    Bangle.setBarometerPower(true, "btadv");
+    Bangle.setCompassPower(true, "btadv");
+    Bangle.setGPSPower(true, "btadv");
+    console.log("Sensori riaccesi.");
+  }, 2000);
+
+}, 30 * 60 * 1000 /* 30 minuti in ms */);
+
+
 }
