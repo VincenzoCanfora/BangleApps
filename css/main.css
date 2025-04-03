@@ -18,7 +18,11 @@
   margin: 1px;
 }
 
-.btn[href*="github.com"] {
+a.btn[href*="github.com"] {
+  display: none !important;
+}
+
+a.link-copy-url {
   display: none !important;
 }
 
