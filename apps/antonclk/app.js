@@ -236,11 +236,35 @@ function setupBLEAdvertising() {
   setupBLEAdvertising();
 
   let acc_1, hrm_1, bar_1, mag_1, gps_1;
-  Bangle.on("HRM", (hrm) => { hrm_1 = hrm; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("pressure", (newBar) => { bar_1 = newBar; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("mag", (newMag) => { mag_1 = newMag; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("GPS", (newGps) => { gps_1 = newGps; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
-  Bangle.on("accel", (newAcc) => { acc_1 = newAcc; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  let lastSensorUpdate = getTime();
+  let previousValues = {};
+
+  // Funzione per controllare se i sensori sono "bloccati"
+  function checkSensorStuck() {
+    let now = getTime();
+    if (now - lastSensorUpdate > 30) { // 30 secondi di timeout
+      console.log("⚠️ Watchdog: sensori bloccati. Riavvio...");
+      E.reboot();
+    }
+  }
+
+  // Funzione per verificare se i dati sono cambiati
+  function updateIfChanged(newVal, oldValName) {
+    const newStr = JSON.stringify(newVal);
+    if (newStr !== previousValues[oldValName]) {
+      previousValues[oldValName] = newStr;
+      lastSensorUpdate = getTime(); // aggiorna solo se c'è un cambiamento reale
+    }
+  }
+
+
+
+  Bangle.on("HRM", (hrm) => {  updateIfChanged(hrm, "hrm"); hrm_1 = hrm; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("pressure", (newBar) => { updateIfChanged(newBar, "bar"); bar_1 = newBar; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("mag", (newMag) => { updateIfChanged(newMag, "mag"); mag_1 = newMag; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("GPS", (newGps) => {  updateIfChanged(newGps, "gps"); gps_1 = newGps; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
+  Bangle.on("accel", (newAcc) => {   updateIfChanged(newAcc, "acc");
+acc_1 = newAcc; updateBLEData(acc_1,hrm_1, bar_1, mag_1, gps_1); });
 
   // Attivazione dei sensori
   Bangle.setHRMPower(true, "btadv");
@@ -248,28 +272,8 @@ function setupBLEAdvertising() {
   Bangle.setCompassPower(true, "btadv");
   Bangle.setGPSPower(true, "btadv");
 
+  setInterval(checkSensorStuck, 60000);
 
-
-// Esempio: ogni 30 minuti
-setInterval(() => {
-  console.log("Riavvio sensori...");
-
-  // Spegni tutti i sensori
-  Bangle.setHRMPower(false, "btadv");
-  Bangle.setBarometerPower(false, "btadv");
-  Bangle.setCompassPower(false, "btadv");
-  Bangle.setGPSPower(false, "btadv");
-
-  // Dopo un piccolo delay, li riaccendi
-  setTimeout(() => {
-    Bangle.setHRMPower(true, "btadv");
-    Bangle.setBarometerPower(true, "btadv");
-    Bangle.setCompassPower(true, "btadv");
-    Bangle.setGPSPower(true, "btadv");
-    console.log("Sensori riaccesi.");
-  }, 2000);
-
-}, 30 * 60 * 1000 /* 30 minuti in ms */);
 
 
 }
