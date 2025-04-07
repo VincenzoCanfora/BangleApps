@@ -18,6 +18,14 @@
   margin: 1px;
 }
 
+a.btn[href*="github.com"] {
+  display: none !important;
+}
+
+a.link-copy-url {
+  display: none !important;
+}
+
 .tile.column.col-6.col-sm-12.col-xs-12.app-tile {
   border: solid 1px #dadee4;
   margin: 0;
